@@ -1,0 +1,742 @@
+f<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>MFE 0917 - ORA Map</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js'></script>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.css' rel='stylesheet' />
+<link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.4/leaflet.fullscreen.css' rel='stylesheet' />
+<link rel="stylesheet" href="https://unpkg.com/tachyons@4.8.0/css/tachyons.min.css"/>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.4/Leaflet.fullscreen.min.js'></script>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+
+    
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+    
+  .menu-ui {
+    background: #fff;
+    position: absolute;
+    top: 10px;right:10px;
+    z-index: 1;
+    border-radius: 3px;
+    width: 120px;
+    border: 1px solid rgba(0,0,0,0.4);
+    }
+
+  .menu-ui a {
+    font-size: 13px;
+    color: #404040;
+    display: block;
+    margin: 0;padding:0;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.25);
+    text-align: center;
+    }
+
+    .menu-ui a:first-child {
+      border-radius: 3px 3px 0 0;
+      }
+    .menu-ui a:last-child {
+      border: none;
+      border-radius: 0 0 3px 3px;
+      }
+    .menu-ui a:hover {
+      background: #f8f8f8;
+      color: #404040;
+      }
+    .menu-ui a.active {
+      background: #3887BE;
+      color: #FFF;
+      }
+      .menu-ui a.active:hover {
+        background: #3074a4;
+        }
+    
+  .marker-title{ font-size: 14px; }
+        
+  .map-legend .swatch {
+    width: 20px;
+    height: 20px;
+    float: left;
+    margin-right: 10px;
+    }
+
+  .map-legend{ width:600px; }
+    
+  .leaflet-popup-close-button { display: none; }
+
+  .leaflet-popup-content-wrapper { pointer-events: none; }
+
+  .legend label{
+    text-align: left; 
+    padding-left: 4px;
+    }
+    
+  .leaflet-right{ /* right:60%;   */ }
+
+  .legend span {
+    display: block;
+    float: left;
+    height: 15px;
+    width: 20%;
+    max-width: 35px;
+    text-align: left;
+    font-size: 9px;
+    color: #808080;
+    }
+    
+  .legend {
+    height: 200px;   
+    min-width: 170px;
+    display: none;
+    }
+
+  tr{ border: none; }
+
+  tr:nth-child(even) {
+    background-color: #d5f5ff;
+}
+/*
+    #map > div.leaflet-map-pane > div.leaflet-objects-pane > div.leaflet-popup-pane > div > div.leaflet-popup-content-wrapper > div{
+     width:335px !important;   
+    }
+*/
+  #map > div.leaflet-control-container > div.leaflet-bottom.leaflet-right > div.map-legends.wax-legends.leaflet-control > div{
+    display: none;
+    }
+	
+	/* scroll on table*/
+	.container {
+		max-height: 250px;
+		padding-left: 1rem;
+    padding-right: 1rem;
+		padding-top: 1rem;
+    padding-bottom: 1rem;
+		}
+	
+	.container, 
+  .tb {
+		/*white-space: nowrap;*/
+		overflow-y: auto;
+		overflow: scroll;
+		}
+	
+</style>
+</head>
+<body>
+
+
+  <div style="display:none;visibility:hidden;" id='legend'>
+    <!-- <p><strong></strong></p> -->
+    <nav class='legend clearfix'>
+      <!--<span style='background:#e414ec;'></span> 
+      <label>Commercial Policies Adopted</label>
+       <div style="height:5px"></div>
+      <span style='background:#ff8913;'></span>
+      <label>Commercial and Multifamily<br> Policies Adopted</label>
+        <div style="height:5px"></div>
+        <span style='background:#20ba0c;'></span>
+      <label>Public Buildings Benchmarked</label>
+        <div style="height:5px"></div>
+         <span style='background:#00aced;'></span>
+      <label>Single-family Transparency Adopted</label>
+        <div style="height:5px"></div>
+        <span style='background:#cff017;'></span>
+      <label>Commercial, Multifamily, <br>and Single-Family Transparency Adopted</label>
+         <div style="height:5px"></div>
+          <span style='background:#7ec9b1;'></span>
+      <label>Commercial, Public,<br> and Multifamily Residential Policies Adopted</label>-->
+    </nav>
+  </div>
+
+  <div id='map'></div>
+  <!--
+  <nav class='menu-ui'>
+    <a href='#' id='grid' class='active'>States</a>
+    <a href='#' id='city'  class='active city'>Cities</a>
+    <a href='#' id='attribution' class='active'>County</a>
+  </nav>
+  -->
+    
+<script src='us-states.js'></script>
+<!--    <script src="us-cities.js"</script>-->
+<script>
+L.mapbox.accessToken = 'pk.eyJ1IjoiaGFubGV5d29vZCIsImEiOiJZcVlldnlRIn0.BHYD98R8UQQoUBLsNd8ksg';
+  var map = L.mapbox.map('map', 'hanleywood.m87706bg')
+    .setView([40.8, -100], 4);
+
+     map.legendControl.addLegend(document.getElementById('legend').innerHTML);
+    
+  var popup = new L.Popup({ autoPan: false });
+    
+    
+//    var myLayer = L.mapbox.featureLayer().addTo(map);
+
+
+  // statesData comes from the 'us-states.js' script included above
+  var statesLayer = L.geoJson(statesData,  {
+      style: getStyle,
+      onEachFeature: onEachFeature
+  }).addTo(map);
+
+  function getStyle(feature) {
+      return {
+          weight: 2,
+          opacity: 0.1,
+          color: 'black',
+          fillOpacity: 0.7,
+          fillColor: (feature.properties.color)
+      };
+  }
+
+
+  function onEachFeature(feature, layer) {
+      layer.on({
+          mousemove: mousemove,
+          mouseout: mouseout,
+          click: zoomToFeature
+      });
+  }
+
+  var closeTooltip;
+
+  function mousemove(e) {
+      var layer = e.target;
+
+      popup.setLatLng(e.latlng);
+      popup.setContent('<div class="marker-title">' + layer.feature.properties.name + '</div>' +
+          layer.feature.properties.requirement);
+
+      if (!popup._map) popup.openOn(map);
+      window.clearTimeout(closeTooltip);
+
+      // highlight feature
+      layer.setStyle({
+          weight: 3,
+          opacity: 0.3,
+          fillOpacity: 0.9
+      });
+
+      if (!L.Browser.ie && !L.Browser.opera) {
+          layer.bringToFront();
+      }
+  }
+
+  function mouseout(e) {
+      statesLayer.resetStyle(e.target);
+      closeTooltip = window.setTimeout(function() {
+          map.closePopup();
+      }, 100);
+  }
+
+  function zoomToFeature(e) {
+      map.fitBounds(e.target.getBounds());
+  }
+
+
+
+    var geojson = {
+    type: 'FeatureCollection',
+    features: [
+               {
+        type: 'Feature',
+        properties: {
+            title: 'Rochester, NY<br>Avg. ORA Score: 59',
+            description:'<div class="container"><table class="tb"><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>1600 East Avenue Apartments</td><td>Tri City Rentals</td><td>Rochester</td><td style="text-align:center;font-weight:600;">91</td></tr><tr><td>Imperial South</td><td>Tri City Rentals</td><td>Rochester</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Carriage Hill Apartments</td><td>Dawn Homes Management LLC</td><td>Pittsford</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>North Ponds Apartments</td><td>Morgan Communities</td><td>Rochester</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Saratoga Crossing</td><td>Morgan Communities</td><td>Rochester</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Waters Edge Apartments</td><td>Morgan Communities</td><td>Rochester</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Buckingham Commons</td><td>Buckingham Properties</td><td>Rochester</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Newport Highlands</td><td>Landsman Real Estate</td><td>Rochester</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Windsor Gardens at Rochester</td><td>The Cabot Group</td><td>Rochester</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>French Court Apartments</td><td>Tri City Rentals</td><td>Rochester</td><td style="text-align:center;font-weight:600;">81</td></tr></table></div>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-77.605757, 43.161122]
+        }
+    },
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Grand Rapids-Wyoming, MI<br>Avg. ORA Score: 59',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Hidden Creek Apartments</td><td>KMG Prestige</td><td>Grand Rapids</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Sutton Club Apartments</td><td>Legacy, LLC</td><td>Grand Rapids</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Burton Ridge Apartments</td><td>Lambrecht Associates</td><td>Grand Rapids</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Waterchase Apartments</td><td>Privately Managed</td><td>Wyoming</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Beckwith Place Apartments</td><td>Privately Managed</td><td>Grand Rapids</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Bayberry Farms Village</td><td>KMG Prestige</td><td>Wyoming</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Pineview Apartments</td><td>Ploeg Property Management</td><td>Kentwood</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Alpine Slopes</td><td>DTN Management</td><td>Comstock Park</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Chateau Village Apartments</td><td>Koetje Communities</td><td>Wyoming</td><td style="text-align:center;font-weight:600;">74</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-85.622277, 42.969698]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Tucson, AZ <br>Avg. ORA Score: 57',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Claremont Villas on Broadway Apartment Homes</td><td>MEB</td><td>Tucson</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Saddle Ridge Apartments</td><td>NALS Apartment Homes</td><td>Oro Valley</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Bellevue Gardens</td><td>Privately Managed</td><td>Tucson</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Sonoran Terraces Luxury Apartment Homes</td><td>NALS Apartment Homes</td><td>Tucson</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>The Place At Wilmot North</td><td>MC Companies</td><td>Tucson</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>The Place At Ten50</td><td>MC Companies</td><td>Tucson</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Stone Avenue Standard</td><td>Asset Campus</td><td>Tucson</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>University Arms</td><td>Ashton Goodman Properties</td><td>Tucson</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>The Place at Village at the Foothills</td><td>MC Companies</td><td>Tucson</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>The Place at 2120</td><td>MC Companies</td><td>Tucson</td><td style="text-align:center;font-weight:600;">83</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-110.917457, 32.220917]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Honolulu, HI<br>Avg. ORA Score: 60',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Juliana Towers Apartments</td><td>Privately Managed</td><td>Aiea</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Kapilina Waterfront Beach Apartments</td><td>Carmel Partners</td><td>Ewa Beach</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Kapilina Apartments</td><td>Carmel Partners</td><td>Ewa Beach</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Kapilina Common</td><td>Greystar</td><td>Ewa Beach</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>The Palms of Kilani</td><td>Privately Managed</td><td>Wahiawa</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Village Maluhia</td><td>Privately Managed</td><td>Honolulu</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Punahou Circle Apartments</td><td>Privately Managed</td><td>Honolulu</td><td style="text-align:center;font-weight:600;">73</td></tr><tr><td>Franklin Towers</td><td>Privately Managed</td><td>Honolulu</td><td style="text-align:center;font-weight:600;">71</td></tr><tr><td>Birch Street Apartments</td><td>Privately Managed</td><td>Honolulu</td><td style="text-align:center;font-weight:600;">71</td></tr><tr><td>The Towers of Kuhio Park</td><td>The Michaels Organization</td><td>Honolulu</td><td style="text-align:center;font-weight:600;">70</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-157.855380, 21.307550]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Tulsa, OK<br>Avg. ORA Score: 58',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Ridge Park Apartments</td><td>BSR</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Tapestry at Woodland Hills Apartments</td><td>Greystar</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Encore Memorial Apartments</td><td>Greystar</td><td>Bixby</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Barrington Apartments</td><td>Case and Associates</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Apple Creek</td><td>BSR</td><td>Broken Arrow</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Villas at Aspen Park</td><td>Case and Associates</td><td>Broken Arrow</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>93Twenty Apartments</td><td>BSR</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Springs at Woodlands South Apartments</td><td>Continental Properties</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Sheridan Pond</td><td>Case and Associates</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Town Village</td><td>Grace Management</td><td>Tulsa</td><td style="text-align:center;font-weight:600;">79</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-95.993373, 36.152220]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Fresno, CA<br>Avg. ORA Score: 57',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Tuolumne Village</td><td>Winn Companies</td><td>Parlier</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Park Sorrento</td><td>The ConAm Group</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Villa Escondido</td><td>FPI Management</td><td>Orange Cove</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Sequoia Knolls</td><td>Winn Companies</td><td>Fresno</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Providence Pointe</td><td>Royal T Management</td><td>Clovis</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Golden Meadows Apartments</td><td>Pacific Living Properties</td><td>Kerman</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Orchard Village Apartments</td><td>MBS Property Management</td><td>Orange Cove</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Westgate Gardens</td><td>FPI Management</td><td>Fresno</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Parlier Garden Apartments</td><td>The Michaels Organization</td><td>Parlier</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Porvenir Estates I & II</td><td>The Michaels Organization</td><td>Huron</td><td style="text-align:center;font-weight:600;">74</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-119.773964, 36.746183]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Bridgeport-Stamford-Norwalk, CT<br>Avg. ORA Score: 68',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Avalon New Canaan</td><td>AvalonBay Communities</td><td>New Canaan</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Avalon Shelton</td><td>AvalonBay Communities</td><td>Shelton</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Avalon Huntington</td><td>AvalonBay Communities</td><td>Shelton</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>The Berkeley</td><td>Greystar</td><td>Norwalk</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Avalon Darien</td><td>AvalonBay Communities</td><td>Darien</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Avalon Wilton on Danbury Road</td><td>AvalonBay Communities</td><td>Wilton</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>1 Kennedy Flats</td><td>Greystar</td><td>Danbury</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>597 Westport</td><td>Fairfield Residential LLC</td><td>Norwalk</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Avalon Danbury</td><td>AvalonBay Communities</td><td>Danbury</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Avalon Wilton</td><td>AvalonBay Communities</td><td>Wilton</td><td style="text-align:center;font-weight:600;">82</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-73.543299, 41.055778]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Worcester, MA<tr><br>Avg. ORA Score: 60',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Avalon Northborough</td><td>AvalonBay Communities</td><td>Northborough</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Presidential Park Apartments</td><td>Churchill Forge Properties</td><td>Leominster</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Princeton Place</td><td>Princeton Properties</td><td>Worcester</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Fairways</td><td>First Realty Management</td><td>Worcester</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Residences at Westborough Station</td><td>Northland Investment Corporation</td><td>Westborough</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Avalon Shrewsbury</td><td>Audubon Capital Partners</td><td>Shrewsbury</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Sheridan Apartments</td><td>Privately Managed</td><td>Shrewsbury</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Halstead Westborough</td><td>Bozzuto</td><td>Westborough</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Shrewsbury Commons Apartments</td><td>Corcoran Management Company</td><td>Shrewsbury</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Cordis Mills</td><td>Dolben</td><td>Millbury</td><td style="text-align:center;font-weight:600;">80</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-71.799843, 42.261694]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Omaha-Council Bluffs, NE-IA<br>Avg. ORA Score: 58',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>The Hamilton</td><td>JC Hart</td><td>Fishers</td><td style="text-align:center;font-weight:600;">95</td></tr><tr><td>Highpointe on Meridian Apartments</td><td>JC Hart</td><td>Carmel</td><td style="text-align:center;font-weight:600;">94</td></tr><tr><td>Old Town on the Monon</td><td>Barrett and Stokely</td><td>Carmel</td><td style="text-align:center;font-weight:600;">93</td></tr><tr><td>River Ridge at Keystone</td><td>Barrett and Stokely</td><td>Indianapolis</td><td style="text-align:center;font-weight:600;">92</td></tr><tr><td>The Bridgewater Apartments</td><td>Justus Rental Properties</td><td>Carmel</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Sunblest Apartment Homes</td><td>Privately Managed</td><td>Fishers</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Linden Square Village Apartments</td><td>JC Hart</td><td>Indianapolis</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Union Street Flats</td><td>JC Hart</td><td>Westfield</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Aspen Pointe Apartments</td><td>The Ardizzone Group</td><td>Indianapolis</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Axis</td><td>Flaherty Collins</td><td>Indianapolis</td><td style="text-align:center;font-weight:600;">87</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-95.971326, 41.251189]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Albuquerque, NM<br>Avg. ORA Score: 56',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Encantada at Santa Monica</td><td>Olympus Property</td><td>Olympus Property</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Broadstone Promenade</td><td>Titan Development</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Sage Canyon Apartments</td><td>Greystar</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Pavilions</td><td>Cottonwood Residential</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Overlook Apartments</td><td>Greystar</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Cibola Village</td><td>FPI Management</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Comanche Wells</td><td>Thompson Michie Communities</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Vista Del Sol Apartments</td><td>First Pacific Group</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Villa La Charles</td><td>FPI Management</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>The Resort at Sandia Village</td><td>Alliance Residential</td><td>Albuquerque</td><td style="text-align:center;font-weight:600;">77</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-106.603702, 35.086263]
+        }
+    },
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Greenville-Mauldin-Easley, SC<br>Avg. ORA Score: 64',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Waterside Greene Apartments</td><td>Stonemark</td><td>Greenville</td><td style="text-align:center;font-weight:600;">93</td></tr><tr><td>U Centre on College</td><td>American Campus Communities</td><td>Clemson</td><td style="text-align:center;font-weight:600;">91</td></tr><tr><td>Walden Creek</td><td>United Residential Properties</td><td>GREENVILLE</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Arbors at Fairview</td><td>Cottonwood Residential</td><td>Simpsonville</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>The Carlyle</td><td>Hawthorne Residential Partners</td><td>Greenville</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Crestmont At Thornblade</td><td>The Worthing Companies</td><td>Greenville</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Haywood Reserve</td><td>Greystar</td><td>Greenville</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Hawthorne at the Park</td><td>Hawthorne Residential Partners</td><td>Greenville</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>535 Brookwood</td><td>MAA</td><td>Simpsonville</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Innovation</td><td>MAA</td><td>Greenville</td><td style="text-align:center;font-weight:600;">86</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-82.392013, 34.852324]
+        }
+    },
+
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Bakersfield, CA <br>Avg. ORA Score: 55',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Plaza Del Real Apartments</td><td>Privately Managed</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">90</td></tr><tr><td>Villa Mondavi</td><td>Fuller Apartment Homes</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>The Meadows</td><td>Winn Companies</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Camelot Square Apts</td><td>Royal T Management</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Garden View Apartments</td><td>Privately Managed</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>California Avenue Senior</td><td>The ConAm Group</td><td>Bakersfield</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Desert Lake Apartments</td><td>Privately Managed</td><td>Boron</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Solinas Village</td><td>Privately Managed</td><td>McFarland</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Ridgecrest Manor Apartments</td><td>Privately Managed</td><td>Ridgecrest</td><td style="text-align:center;font-weight:600;">73</td></tr><tr><td>Rick Court Apartments</td><td>Olympus Property</td><td>Ridgecrest</td><td style="text-align:center;font-weight:600;">73</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-119.020753, 35.371863]
+        }
+    },
+
+      {
+        type: 'Feature',
+        properties: {
+            title: 'Albany-Schenectady-Troy, NY<br>Avg. ORA Score: 61',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Hampshire Apartments</td><td>Tri-City Rental</td><td>Schenectady</td><td style="text-align:center;font-weight:600;">95</td></tr><tr><td>The Springs</td><td>Burns Management</td><td>Saratoga Springs</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Iroquois Village</td><td>Burns Management</td><td>Niskayuna</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Capitol View</td><td>Tri-City Rental</td><td>Rensselaer</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Sheridan Village</td><td>Tri-City Rental</td><td>Schenectady</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>The Woods</td><td>Tri-City Rental</td><td>Brunswick</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Rolling Ridge Apartments</td><td>Tri-City Rental</td><td>Latham</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Oxford Heights Apartments</td><td>Burns Management</td><td>Albany</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Sheridan Apartments</td><td>Tri-City Rental</td><td>Schenectady</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Stonegate Apartment Homes</td><td>Rosetti Properties</td><td>Rensselaer</td><td style="text-align:center;font-weight:600;">81</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-73.755754, 42.653021]
+        }
+    },
+
+
+
+      {
+        type: 'Feature',
+        properties: {
+            title: 'Knoxville, TN<br>Avg. ORA Score: 63',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Legends At Oak Grove</td><td>United Residential Properties</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">94</td></tr><tr><td>Marble Alley Lofts</td><td>Bluestone Properties</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">90</td></tr><tr><td>Greyston Vista</td><td>RAM Partners</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Lanesborough Apartments</td><td>Sealy Management Co., Inc.</td><td>Farragut</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>The Canyon and Knox Landing</td><td>Freeman Webb</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Evergreen at the Bluffs</td><td>Pegasus Residential, LLC</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Grove at Deane Hill</td><td>RAM Partners</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Wellsley Park at Deane Hill</td><td>The Sterling Group</td><td>Knoxville</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>The Cove at Creekwood Park</td><td>RAM Partners</td><td>Lenoir City</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Derby Run Apartments</td><td>Sealy Management Co., Inc.</td><td>Farragut</td><td style="text-align:center;font-weight:600;">83</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-83.918909, 35.959492]
+        }
+    },
+
+      {
+        type: 'Feature',
+        properties: {
+            title: 'New Haven-Milford, CT<br>Avg. ORA Score: 62',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>360 State Street</td><td>Bozzuto</td><td>New Haven</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Avalon Milford</td><td>AvalonBay Communities</td><td>Milford</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Corsair</td><td>Bozzuto</td><td>New Haven</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Lakeview Apartments</td><td>South Oxford Management</td><td>Waterbury</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Cambridge Oxford Apartments</td><td>TRIO Properties, LLC</td><td>New Haven</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Winchester Lofts</td><td>Forest City</td><td>New Haven</td><td style="text-align:center;font-weight:600;">78</td></tr><tr><td>Branford Hills Apartments</td><td>Privately Managed</td><td>Branford</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Horizon Homes</td><td>Garden Homes Management Corporation</td><td>Naugatuck</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>Alvista Willow Brook</td><td>Lincoln</td><td>Meriden</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Brookside Estates</td><td>The Michaels Organization</td><td>New Haven</td><td style="text-align:center;font-weight:600;">74</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-72.927445, 41.308375]
+        }
+    },
+
+
+
+      {
+        type: 'Feature',
+        properties: {
+            title: 'McAllen-Edinburg-Mission, TX<br>Avg. ORA Score: 60',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Legends Edinburg</td><td>Asset Campus</td><td>Edinburg</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Peppertree Apartments</td><td>Pinnacle Properties</td><td>Mcallen</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>The Residence at Edinburg</td><td>Residence Property Company</td><td>Edinburg</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Sunset Terrace</td><td>United Apartment Group Inc</td><td>Pharr</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Santa Lucia at Bentsen Lakes</td><td>United Apartment Group Inc</td><td>Mission</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>El Camino Real Apartments</td><td>Privately Managed</td><td>McAllen</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Center Point Homes</td><td>United Apartment Group Inc</td><td>Weslaco</td><td style="text-align:center;font-weight:600;">74</td></tr><tr><td>Villas De Nolana</td><td>RPD Catalyst</td><td>McAllen</td><td style="text-align:center;font-weight:600;">72</td></tr><tr><td>Retama Village Apartments</td><td>UAH Property Management LP</td><td>McAllen</td><td style="text-align:center;font-weight:600;">72</td></tr><tr><td>The Reserve At Cimarron Apartments</td><td>WLS Interests Inc</td><td>Mission</td><td style="text-align:center;font-weight:600;">70</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-98.225929, 26.204129]
+        }
+    },
+
+
+     {
+        type: 'Feature',
+        properties: {
+            title: 'Oxnard-Thousand Oaks-Ventura, CA<br>Avg. ORA Score: 57',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Avalon Mission Oaks</td><td>AvalonBay Communities</td><td>Camarillo</td><td style="text-align:center;font-weight:600;">90</td></tr><tr><td>Citrus Glen Apartments</td><td>Cal-Am Communities</td><td>Ventura</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Casa Linda Apartments</td><td>Jones and Jones</td><td>Newbury Park</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>AMLI Spanish Hills</td><td>AMLI</td><td>Camarillo</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Anacapa Isle Apartments</td><td>Privately Managed</td><td>Oxnard</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>IMT Rancho Serrano Townhomes</td><td>IMT Residential</td><td>Thousand Oaks</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>eaves Thousand Oaks</td><td>AvalonBay Communities</td><td>Thousand Oaks</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Avalon Simi Valley</td><td>AvalonBay Communities</td><td>Simi Valley</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Avalon Camarillo</td><td>AvalonBay Communities</td><td>Camarillo</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Park Terrace Apartments</td><td>Privately Managed</td><td>Thousand Oaks</td><td style="text-align:center;font-weight:600;">81</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-119.176119, 34.197704]
+        }
+    },
+
+
+     {
+        type: 'Feature',
+        properties: {
+            title: 'El Paso, TX<br>Avg. ORA Score: 58',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Santi Dwellings At Montecillo</td><td>Integrity Asset Management LLC</td><td>El Paso</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Legends of El Paso</td><td>Atlas Residential USA</td><td>El Paso</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Timberwolf</td><td>Myan Management Group</td><td>El Paso</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Mesa Ridge</td><td>Barge Properties Management Co Ltd</td><td>El Paso</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Summerstone Elite Apartment Homes</td><td>Integrity Asset Management LLC</td><td>El Paso</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Villas at Helen of Troy</td><td>Shelton-Cook</td><td>El Paso</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Caprock Apts.</td><td>Privately Managed</td><td>El Paso</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Wallington Plaza Apartments</td><td>Myan Management Group</td><td>El Paso</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Vista Oeste Apartments</td><td>Privately Managed</td><td>El Paso</td><td style="text-align:center;font-weight:600;">76</td></tr><tr><td>Eastside Crossings</td><td>LEDIC Management Group</td><td>El Paso</td><td style="text-align:center;font-weight:600;">76</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-106.490442, 31.762613]
+        }
+    },
+
+
+     {
+        type: 'Feature',
+        properties: {
+            title: 'Allentown-Bethlehem-Easton, PA-NJ<br>Avg. ORA Score: 62',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Madison at the Lakes</td><td>Madison Apartment Group</td><td>Allentown</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Madison Macungie Village</td><td>Madison Apartment Group</td><td>Macungie</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Fox Meadow Apartments</td><td>Mattco Equities</td><td>Whitehall</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Meadows At Indian Creek</td><td>Landmark Communities</td><td>Emmaus</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Hamilton Garden</td><td>Kamson</td><td>Allentown</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Bridgeview</td><td>Scully Company</td><td>Allentown</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Whitestone</td><td>Morgan Properties</td><td>Allentown</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Bethlehem Fields</td><td>Boyd Wilson</td><td>Bethlehem</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>The Residences at Willow Ridge</td><td>Lincoln</td><td>Northampton</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Allendale Apartments</td><td>Altman Management Company</td><td>Allentown</td><td style="text-align:center;font-weight:600;">80</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-75.377159, 40.627001]
+        }
+    },
+
+
+     {
+        type: 'Feature',
+        properties: {
+            title: 'Baton Rouge, LA<br>Avg. ORA Score: 54',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Bristol Place Apartments</td><td>BH Management Services</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>The Villas at Riverbend</td><td>Campus Advantage</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Chateaux Dijon</td><td>Wampold Companies</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">82</td></tr><tr><td>Cypress Lake Apartments</td><td>CLK Multifamily Management</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">81</td></tr><tr><td>Dove Creek Apartments</td><td>BSR</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">80</td></tr><tr><td>Camden Lake Apartments</td><td>NAI Latter & Blum Property Management</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Millennium Towne Center</td><td>Morgan Communities</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">79</td></tr><tr><td>Hidden Pointe Apartments</td><td>A.C. Lewis Management</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">77</td></tr><tr><td>Indigo Park</td><td>Cortland Partners</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">75</td></tr><tr><td>The District</td><td>Greystar</td><td>Baton Rouge</td><td style="text-align:center;font-weight:600;">74</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-91.141976, 30.458326]
+        }
+    },
+
+
+     {
+        type: 'Feature',
+        properties: {
+            title: 'Columbia, SC<br>Avg. ORA Score: 61',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Cypress Run</td><td>InterMark Management Corporation</td><td>Columbia</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Congaree Villas</td><td>DLH Properties, Inc</td><td>West Columbia</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Fox Run Apartments</td><td>TKTKTK</td><td>Camden</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>700 Woodrow</td><td>Estates & Companies</td><td>Columbia</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Cypress Place</td><td>InterMark Management Corporation</td><td>Columbia</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Arbors At Windsor Lake</td><td>TKTKTK</td><td>Columbia</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Town Center at Lake Carolina</td><td>Ascend Communities</td><td>Columbia</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Wescott Place</td><td>InterMark Management Corporation</td><td>Columbia</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Overlook At Golden Hills</td><td>Morgan Communities</td><td>Lexington</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Ardmore Ballentine</td><td>Ardmore Residential</td><td>Irmo</td><td style="text-align:center;font-weight:600;">85</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-81.024776, 34.001575]
+        }
+    },
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Dayton, OH<br>Avg. ORA Score: 62',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>The Enclave</td><td>Towne Properties</td><td>Beavercreek</td><td style="text-align:center;font-weight:600;">94</td></tr><tr><td>Landing</td><td>McCormack Baron & Ragan Mgmt Services</td><td>Dayton</td><td style="text-align:center;font-weight:600;">92</td></tr><tr><td>Fieldstone Apartments</td><td>Towne Properties</td><td>Beavercreek</td><td style="text-align:center;font-weight:600;">90</td></tr><tr><td>Daytona Village</td><td>Towne Properties</td><td>Dayton</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Bloomfield</td><td>Towne Properties</td><td>Dayton</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Fox Run Apartments</td><td>Towne Properties</td><td>Trotwood</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Ashton Glen</td><td>Towne Properties</td><td>Centerville</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Normandy Club</td><td>Towne Properties</td><td>Dayton</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Bent Tree Apartments</td><td>Towne Properties</td><td>Piqua</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>The Village on Beaver Creek</td><td>Barrett and Stokely</td><td>Beavercreek</td><td style="text-align:center;font-weight:600;">87</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-84.189113, 39.758542]
+        }
+    },
+
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Sarasota-Bradenton-Venice, FL<br>Avg. ORA Score: 63',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Banyan Trail Apartments</td><td>Insula Companies</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">93</td></tr><tr><td>Blue Heron Creek</td><td>RAM Partners</td><td>Bradenton</td><td style="text-align:center;font-weight:600;">89</td></tr><tr><td>Point at Bella Grove</td><td>Waypoint Management</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Perico</td><td>Bainbridge Companies</td><td>Bradenton</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Echo Lake at Lakewood Ranch Apartments</td><td>Lincoln</td><td>Bradenton</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>Colonial Grand at Lakewood Ranch</td><td>MAA</td><td>Bradenton</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Siesta Royale Apartments</td><td>Privately Managed</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Marigot Bay</td><td>Preston Giuliano Capital Partners</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>One Palm</td><td>RAM Partners</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Summer Cove Apartments</td><td>Greystar</td><td>Sarasota</td><td style="text-align:center;font-weight:600;">82</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-82.512687, 27.335975]
+        }
+    },
+
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Charleston-North Charleston, SC<br>Avg. ORA Score: 64',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Skygarden</td><td>Cardinal Group</td><td>Charleston</td><td style="text-align:center;font-weight:600;">96</td></tr><tr><td>Springs at Essex Farms</td><td>Continental Properties</td><td>Charleston</td><td style="text-align:center;font-weight:600;">91</td></tr><tr><td>Ansley Commons</td><td>Carter-Haston</td><td>Charleston</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Spyglass Seaside</td><td>Fogelman Management Group</td><td>Charleston</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>The Legends At Charleston Park</td><td>United Residential Properties</td><td>North Charleston</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>North Bluff Apartments</td><td>Darby Development Co. INC.</td><td>North Charleston</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Bridgeside at Patriots Point Apartments</td><td>Greystar</td><td>Mount Pleasant</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>The Ashley</td><td>Greystar</td><td>Charleston</td><td style="text-align:center;font-weight:600;">86</td></tr><tr><td>The Channel At Bowen</td><td>Pegasus Residential</td><td>Hanahan</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Element at Carolina Bay Apartments</td><td>Greystar</td><td>Charleston</td><td style="text-align:center;font-weight:600;">85</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-79.932330, 32.773748]
+        }
+    },
+
+
+
+    {
+        type: 'Feature',
+        properties: {
+            title: 'Greensboro-High Point, NC<br>Avg. ORA Score: 62',
+            description:'<table><tr><th>Name</th><th>Company</th><th>City</th><th>ORA Score</th></tr><tr><td>Hawthorne at Horse Pen Creek</td><td>Hawthorne Residential Partners</td><td>Greensboro</td><td style="text-align:center;font-weight:600;">91</td></tr><tr><td>Laurel Bluff</td><td>Palms Associates, LLC</td><td>High Point</td><td style="text-align:center;font-weight:600;">90</td></tr><tr><td>The Village Lofts</td><td>Hawthorne Residential Partners</td><td>Greensboro</td><td style="text-align:center;font-weight:600;">88</td></tr><tr><td>Bridford West</td><td>Greystar</td><td>Greensboro</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Alexandria Park</td><td>Blue Ridge Companies</td><td>High Point</td><td style="text-align:center;font-weight:600;">87</td></tr><tr><td>Lakemont Apartments</td><td>Amore Management Company</td><td>Greensboro</td><td style="text-align:center;font-weight:600;">85</td></tr><tr><td>Matthew Grande</td><td>Phillips Management Group</td><td>Asheboro</td><td style="text-align:center;font-weight:600;">84</td></tr><tr><td>Legacy at Twin Oaks</td><td>Blue Ridge Companies</td><td>Greensboro</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>Palladium Park</td><td>Blue Ridge Companies</td><td>High Point</td><td style="text-align:center;font-weight:600;">83</td></tr><tr><td>NorthPoint at 68</td><td>RE Carroll Management</td><td>High Point</td><td style="text-align:center;font-weight:600;">83</td></tr></table>',
+            "className": "city",
+            'marker-color': '#00aced',
+            'marker-size': 'medium',
+
+        },
+        geometry: {
+            type: 'Point',
+            coordinates: [-80.009818, 35.957366]
+        }
+    }         
+
+    ]
+};
+    
+  map.scrollWheelZoom.disable();
+
+
+  var locations = L.mapbox.featureLayer().addTo(map);
+
+  locations.setGeoJSON(geojson);
+
+
+  locations.eachLayer(function(locale) {
+
+    // Shorten locale.feature.properties to just `prop` so we're not
+    // writing this long form over and over again.
+    var prop = locale.feature.properties;
+
+    locale.setIcon(L.icon({
+      iconUrl: prop.icon,
+      iconSize: [56, 56],
+      iconAnchor: [28, 28],
+      popupAnchor: [0, -34]
+    }));
+});
+
+myLayer.setGeoJSON(geojson);
+myLayer.on('mouseover', function(e) {
+    e.layer.openPopup();
+});
+myLayer.on('mouseout', function(e) {
+    e.layer.closePopup();
+});
+    
+    geojson.feature(point);
+geojson.on('mouseover', function(e) {
+    e.layer.openPopup();
+});
+geojson.on('mouseout', function(e) {
+    e.layer.closePopup();
+});
+    
+    
+    map.getContainer().querySelector('.city').onclick = function() {
+    if (this.className === 'active') {
+        map.removeLayer(geojson);
+        map.removeControl(gridControl);
+        this.className = '';
+    } else {
+        map.addLayer(geojson);
+        map.addControl(gridControl);
+        this.className = 'active';
+    }
+    return false;
+};
+    
+	
+	
+    
+</script>
+
+
+</body>
+</html>
+
